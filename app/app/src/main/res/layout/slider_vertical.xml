@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.slider.Slider xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/slider"
+    style="@style/Widget.Material3Expressive.Slider.Large"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:value="50"
+    android:valueFrom="0"
+    android:valueTo="101"
+    app:labelStyle="@style/SliderLabel"
+    app:trackStopIndicatorSize="6dp" />
