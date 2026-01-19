@@ -81,8 +81,9 @@ async def schedule_loop():
 async def config(app: Sanic):
     app.ctx.client = httpx.AsyncClient(timeout=2)
     app.ctx.scaled_brightness_dict = {}
-    app.ctx.sockets = set()
+    app.ctx.update_all = False
     app.ctx.all_off = False
+    app.ctx.sockets = set()
     app.ctx.last = None
     with open(CONFIG_FILE) as file:
         data = json.load(file)
@@ -101,8 +102,7 @@ async def auth_middleware(request: Request):
     if request.ip.startswith("192.168.0.2"):
         if app.ctx.all_off:
             app.ctx.all_off = False
-            asyncio.create_task(broadcast())
-            await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
+            app.ctx.update_all = True
         return
     header = request.headers.get("auth")
     if not header:
@@ -181,7 +181,11 @@ async def on(request: Request, id: int):
     if not single or group[light]["ip"] == group[alt_light]["ip"]:
         group[alt_light]["on"] = False
 
-    asyncio.create_task(update_group(group))
+    if app.ctx.update_all:
+        await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
+        app.ctx.update_all = False
+    else:
+        asyncio.create_task(update_group(group))
     asyncio.create_task(broadcast())
     await request.receive_body()
     return empty()
@@ -198,10 +202,14 @@ async def off(request: Request, id: int):
         raise NotFound("Group not found")
 
     group[light]["on"] = False
-    if not single:
+    if not single or group[light]["ip"] == group[alt_light]["ip"]:
         group[alt_light]["on"] = False
-
-    asyncio.create_task(update_group(group))
+    
+    if app.ctx.update_all:
+        await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
+        app.ctx.update_all = False
+    else:
+        asyncio.create_task(update_group(group))
     asyncio.create_task(broadcast())
     await request.receive_body()
     return empty()
