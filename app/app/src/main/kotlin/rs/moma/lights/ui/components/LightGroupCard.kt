@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import rs.moma.lights.ui.theme.*
+import kotlin.math.roundToInt
 import rs.moma.lights.R
 
 @Composable
@@ -81,7 +82,7 @@ fun LightGroupCard(group: Group, modifier: Modifier, vm: MainViewModel, dialogGr
                     group.night.brightness?.toFloat(),
                     modifier = Modifier.offset(x = (-3).dp)
                 ) {
-                    vm.setGroupBrightness(group.id, it.toInt())
+                    vm.setGroupBrightness(group.id, it.roundToInt())
                 }
             }
         }

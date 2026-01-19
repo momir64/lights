@@ -10,4 +10,6 @@
     android:valueFrom="0"
     android:valueTo="101"
     app:labelStyle="@style/SliderLabel"
+    app:thumbHeight="86dp"
+    app:trackHeight="72dp"
     app:trackStopIndicatorSize="6dp" />

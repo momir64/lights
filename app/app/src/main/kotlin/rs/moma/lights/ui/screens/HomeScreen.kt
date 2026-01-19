@@ -21,13 +21,15 @@ fun HomeScreen() {
         horizontalArrangement = Arrangement.Center
     ) {
         Column(
-            modifier = Modifier.fillMaxHeight(),
+            modifier = Modifier
+                .fillMaxHeight()
+                .padding(start = 6.dp),
             verticalArrangement = Arrangement.Center
         ) {
             ToggleButton(
                 modifier = Modifier
                     .width(140.dp)
-                    .padding(end = 16.dp, top = 10.dp, bottom = 40.dp)
+                    .padding(end = 16.dp, top = 18.dp, bottom = 39.5.dp)
                     .weight(1f),
                 active = config.allOff,
                 label = "Turn all off",
@@ -37,7 +39,7 @@ fun HomeScreen() {
             ToggleButton(
                 modifier = Modifier
                     .width(140.dp)
-                    .padding(end = 16.dp, top = 14.dp, bottom = 36.dp)
+                    .padding(end = 16.dp, top = 14.5.dp, bottom = 43.dp)
                     .weight(1f),
                 active = config.nightMode,
                 label = "Night mode",
@@ -51,7 +53,7 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.Center
         ) {
             Column(
-                modifier = Modifier.padding(start = 36.dp, bottom = 25.dp),
+                modifier = Modifier.padding(start = 32.dp, bottom = 25.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Slider(config.brightness, vertical = true) {
