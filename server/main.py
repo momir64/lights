@@ -63,7 +63,7 @@ async def schedule_loop():
                 target = schedule["hour"] * 3600 + schedule["minute"] * 60
                 if abs(now - target) < 30:
                     if schedule["all_off"]:
-                        app.ctx.allOff = True
+                        app.ctx.all_off = True
                         await asyncio.gather(*(update_group(g) for g in app.ctx.groups))
                     if schedule["night_mode"]:
                         app.ctx.night_mode = False
@@ -82,7 +82,7 @@ async def config(app: Sanic):
     app.ctx.client = httpx.AsyncClient(timeout=2)
     app.ctx.scaled_brightness_dict = {}
     app.ctx.sockets = set()
-    app.ctx.allOff = False
+    app.ctx.all_off = False
     app.ctx.last = None
     with open(CONFIG_FILE) as file:
         data = json.load(file)
@@ -99,6 +99,10 @@ async def config(app: Sanic):
 @app.middleware("request")
 async def auth_middleware(request: Request):
     if request.ip.startswith("192.168.0.2"):
+        if app.ctx.all_off:
+            app.ctx.all_off = False
+            asyncio.create_task(broadcast())
+            await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
         return
     header = request.headers.get("auth")
     if not header:
@@ -145,7 +149,7 @@ async def update_group(group: dict):
 
     for key in keys:
         light = group[key]
-        on = light["on"] and not app.ctx.allOff
+        on = light["on"] and not app.ctx.all_off
 
         if light["type"] == "switch":
             url = f"http://{light['ip']}/rpc/switch.set?id={light['id']}&on={str(on).lower()}"
@@ -221,7 +225,7 @@ async def mode(request: Request, state: str):
 
 @app.get("/all-off/<on>")
 async def all_off(request: Request, on: str):
-    app.ctx.allOff = on == "on"
+    app.ctx.all_off = on == "on"
     await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     asyncio.create_task(broadcast())
     await request.receive_body()
@@ -298,7 +302,7 @@ async def broadcast(forceSend: bool = False):
     data = {
         "night_mode": app.ctx.night_mode,
         "brightness": app.ctx.brightness,
-        "all_off": app.ctx.allOff,
+        "all_off": app.ctx.all_off,
         "groups": app.ctx.groups,
         "schedule": app.ctx.schedule
     }
@@ -314,7 +318,7 @@ async def subscribe(request, ws):
     await ws.send(json.dumps({
         "night_mode": app.ctx.night_mode,
         "brightness": app.ctx.brightness,
-        "all_off": app.ctx.allOff,
+        "all_off": app.ctx.all_off,
         "groups": app.ctx.groups,
         "schedule": app.ctx.schedule
     }))
@@ -374,4 +378,4 @@ async def schedule(request: Request):
     return empty()
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=100, auto_reload=True, debug=True, dev=True)
+    app.run(host="0.0.0.0", port=100)
