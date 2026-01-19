@@ -2,25 +2,25 @@ package rs.moma.lights.ui.dialogs
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.KeyboardType
 import rs.moma.lights.viewmodels.MainViewModel
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.foundation.background
+import rs.moma.lights.ui.components.Dropdown
 import androidx.compose.foundation.layout.*
+import rs.moma.lights.ui.utils.SingleToast
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import rs.moma.lights.data.models.*
 import androidx.compose.material3.*
+import rs.moma.lights.data.models.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.*
 import rs.moma.lights.ui.theme.*
-import android.widget.Toast
-import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.window.DialogWindowProvider
-import rs.moma.lights.ui.components.Dropdown
 
 @Composable
 fun LightGroupDialog(group: MutableState<Group?>) {
@@ -147,7 +147,7 @@ fun LightGroupDialog(group: MutableState<Group?>) {
                         colors = ButtonDefaults.buttonColors(containerColor = if (valid) AccentColor else ButtonColor),
                         onClick = {
                             if (!valid) {
-                                Toast.makeText(vm.context, "Fill out all fields", Toast.LENGTH_SHORT).show()
+                                SingleToast.show(vm.context, "Fill out all fields")
                                 return@Button
                             }
 

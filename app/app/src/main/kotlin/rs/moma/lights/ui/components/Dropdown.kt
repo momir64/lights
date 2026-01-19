@@ -30,7 +30,7 @@ fun <T> Dropdown(modifier: Modifier, values: List<T>, selected: T, label: String
         ExposedDropdownMenu(expanded, onDismissRequest = { expanded = false }) {
             values.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.toString().replaceFirstChar { it -> it.uppercase() }) },
+                    text = { Text(it.toString().replaceFirstChar { c -> c.uppercase() }) },
                     onClick = {
                         onSelect(it)
                         expanded = false

@@ -1,7 +1,5 @@
 package rs.moma.lights.viewmodels
 
-import androidx.compose.runtime.snapshots.SnapshotStateList
-import androidx.compose.runtime.mutableStateListOf
 import rs.moma.lights.data.remote.WebSocketClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import rs.moma.lights.data.remote.AuthService
@@ -10,6 +8,7 @@ import rs.moma.lights.data.local.SecureStore
 import rs.moma.lights.data.models.LightMode
 import rs.moma.lights.data.models.Schedule
 import androidx.lifecycle.AndroidViewModel
+import rs.moma.lights.ui.utils.SingleToast
 import kotlinx.coroutines.flow.asStateFlow
 import rs.moma.lights.data.models.Config
 import androidx.lifecycle.viewModelScope
@@ -18,7 +17,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import android.app.Application
-import android.widget.Toast
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
     val context = getApplication<Application>()
@@ -37,14 +35,19 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         WebSocketClient.configFlow.onEach { _config.value = it }.launchIn(viewModelScope)
         AuthService.logoutFlow.onEach {
             logout()
-            val text = "Authentication failed, wrong password."
-            Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
+            SingleToast.show(context, "Authentication failed, wrong password")
         }.launchIn(viewModelScope)
     }
 
     private suspend fun ping(): Boolean? {
         return try {
-            api.ping().isSuccessful
+            val code = api.ping().code().toString()
+            if (code == "401")
+                false
+            else if (code.startsWith("2"))
+                true
+            else
+                null
         } catch (_: Exception) {
             null
         }
@@ -56,9 +59,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         val result = ping()
 
         if (result == false)
-            Toast.makeText(context, "Wrong password", Toast.LENGTH_LONG).show()
+            SingleToast.show(context, "Authentication failed, wrong password")
         else if (result == null)
-            Toast.makeText(context, "Error connecting to the server", Toast.LENGTH_LONG).show()
+            SingleToast.show(context, "Failed to connect to the server")
 
         if (password == null || result != true) {
             AuthService.password = null
@@ -86,7 +89,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun save() = viewModelScope.launch {
         api.save()
-        Toast.makeText(context, "Configuration saved successfully", Toast.LENGTH_SHORT).show()
+        SingleToast.show(context, "Configuration saved successfully")
     }
 
     fun refresh() = viewModelScope.launch {

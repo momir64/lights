@@ -32,6 +32,7 @@ fun LightsScreen() {
 
     if (deleteGroupId.intValue > -1) ConfirmDialog({ deleteGroupId.intValue = -1 }) {
         vm.delete(deleteGroupId.intValue)
+        deleteGroupId.intValue = -1
     }
 
     val lazyListState = rememberLazyListState()

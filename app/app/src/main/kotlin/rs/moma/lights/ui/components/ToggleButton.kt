@@ -19,7 +19,7 @@ import androidx.compose.ui.unit.dp
 import rs.moma.lights.ui.theme.*
 
 @Composable
-fun ToggleButton(active: Boolean, icon: Int, label: String? = null, modifier: Modifier = Modifier, onClick: () -> Unit) {
+fun ToggleButton(active: Boolean, icon: Int, modifier: Modifier = Modifier, label: String? = null, onClick: () -> Unit) {
     Button(
         onClick = onClick,
         modifier = modifier,

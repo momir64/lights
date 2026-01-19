@@ -2,7 +2,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <color name="ic_launcher_background">#21201E</color>
 
-    <dimen name="mtrl_slider_track_side_padding" tools:ignore="PrivateResource">0dp</dimen>
+    <dimen name="mtrl_slider_track_side_padding" tools:ignore="PrivateResource" tools:keep="@dimen/mtrl_slider_track_side_padding">0dp</dimen>
 
     <style name="SliderLabel" parent="Widget.Material3.Slider.Label">
         <item name="backgroundTint" tools:ignore="PrivateResource">@color/m3_ref_palette_orange98</item>
