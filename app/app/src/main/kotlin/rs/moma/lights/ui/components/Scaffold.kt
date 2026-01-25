@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.layout.Arrangement
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.padding
+import rs.moma.lights.ui.dialogs.LightGroupDialog
 import androidx.compose.ui.res.painterResource
+import rs.moma.lights.ui.dialogs.OfflineDialog
 import rs.moma.lights.viewmodels.MainViewModel
 import androidx.compose.foundation.layout.Row
 import rs.moma.lights.ui.theme.AccentColor
@@ -22,7 +24,6 @@ import rs.moma.lights.ui.screens.*
 import androidx.compose.runtime.*
 import kotlinx.coroutines.launch
 import rs.moma.lights.R
-import rs.moma.lights.ui.dialogs.LightGroupDialog
 
 @Composable
 fun Scaffold() {
@@ -31,13 +32,17 @@ fun Scaffold() {
         "Lights" to @Composable { Icon(painterResource(R.drawable.ic_lights), "Light groups") },
         "Schedule" to @Composable { Icon(painterResource(R.drawable.ic_schedule), "Schedule") }
     )
-    val dialogGroup = remember { mutableStateOf<Group?>(null) }
-    val pagerState = rememberPagerState { items.size }
-    val scope = rememberCoroutineScope()
     val vm: MainViewModel = viewModel()
+    val scope = rememberCoroutineScope()
+    val pagerState = rememberPagerState { items.size }
+    val isServerOnline by vm.isServerOnline.collectAsState()
+    val dialogGroup = remember { mutableStateOf<Group?>(null) }
 
     if (dialogGroup.value != null)
         LightGroupDialog(dialogGroup)
+
+    if (isServerOnline == false)
+        OfflineDialog()
 
     Scaffold(
         topBar = {

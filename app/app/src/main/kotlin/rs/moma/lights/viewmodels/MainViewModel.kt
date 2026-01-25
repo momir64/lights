@@ -3,17 +3,17 @@ package rs.moma.lights.viewmodels
 import rs.moma.lights.data.remote.WebSocketClient
 import kotlinx.coroutines.flow.MutableStateFlow
 import rs.moma.lights.data.remote.AuthService
-import rs.moma.lights.data.remote.RestClient
 import rs.moma.lights.data.local.SecureStore
+import rs.moma.lights.data.remote.RestClient
 import rs.moma.lights.data.models.LightMode
-import rs.moma.lights.data.models.Schedule
 import androidx.lifecycle.AndroidViewModel
-import rs.moma.lights.ui.utils.SingleToast
 import kotlinx.coroutines.flow.asStateFlow
-import rs.moma.lights.data.models.Config
+import rs.moma.lights.data.models.Schedule
+import rs.moma.lights.ui.utils.SingleToast
 import androidx.lifecycle.viewModelScope
-import rs.moma.lights.data.models.Group
+import rs.moma.lights.data.models.Config
 import kotlinx.coroutines.flow.launchIn
+import rs.moma.lights.data.models.Group
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import android.app.Application
@@ -25,6 +25,9 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     private val _isLoggedIn = MutableStateFlow<Boolean?>(null)
     val isLoggedIn = _isLoggedIn.asStateFlow()
 
+    private val _isServerOnline = MutableStateFlow<Boolean?>(null)
+    val isServerOnline = _isServerOnline.asStateFlow()
+
     private val _isRefreshing = MutableStateFlow(false)
     val isRefreshing = _isRefreshing.asStateFlow()
 
@@ -33,15 +36,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     init {
         WebSocketClient.configFlow.onEach { _config.value = it }.launchIn(viewModelScope)
-        AuthService.logoutFlow.onEach {
+        AuthService.logoutFlow.onEach { displayToast ->
             logout()
-            SingleToast.show(context, "Authentication failed, wrong password")
+            if (displayToast) SingleToast.show(context, "Authentication failed, wrong password")
+        }.launchIn(viewModelScope)
+        AuthService.offlineFlow.onEach {
+            _isServerOnline.value = false
+            _isLoggedIn.value = SecureStore.load(context) != null
         }.launchIn(viewModelScope)
     }
 
-    private suspend fun ping(): Boolean? {
+    suspend fun ping(displayToast: Boolean = false): Boolean? {
         return try {
             val code = api.ping().code().toString()
+            val unreachable = code.startsWith("5")
+            _isServerOnline.value = !unreachable
+            if (displayToast && unreachable)
+                SingleToast.show(context, "Failed to connect to the server")
             if (code == "401")
                 false
             else if (code.startsWith("2"))
@@ -54,19 +65,25 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun login(password: String? = null) = viewModelScope.launch {
-        val password = password ?: SecureStore.load(context)
+        val savedPassword = SecureStore.load(context)
+        val password = password ?: savedPassword
         AuthService.password = password
         val result = ping()
 
-        if (result == false)
+        if (password != null && result == false)
             SingleToast.show(context, "Authentication failed, wrong password")
-        else if (result == null)
+        else if (savedPassword == null && result == null)
             SingleToast.show(context, "Failed to connect to the server")
 
-        if (password == null || result != true) {
+        if (password == null || result == false) {
+            _isServerOnline.value = true
             AuthService.password = null
             _isLoggedIn.value = false
             SecureStore.clear(context)
+            return@launch
+        } else if (result == null) {
+            _isServerOnline.value = false
+            _isLoggedIn.value = savedPassword != null
             return@launch
         }
 
@@ -77,6 +94,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
 
     fun logout() = viewModelScope.launch {
         SecureStore.clear(context)
+        _isServerOnline.value = true
         _isLoggedIn.value = false
         AuthService.password = null
         WebSocketClient.disconnect()

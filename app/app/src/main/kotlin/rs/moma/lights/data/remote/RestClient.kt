@@ -6,8 +6,8 @@ import okhttp3.logging.HttpLoggingInterceptor
 import rs.moma.lights.data.models.LightType
 import java.util.concurrent.TimeUnit
 import com.google.gson.GsonBuilder
-import okhttp3.OkHttpClient
 import com.google.gson.Gson
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 
 object RestClient {
@@ -24,7 +24,8 @@ object RestClient {
                 val builder = chain.request().newBuilder()
                 AuthService.getHeaderValue()?.let { builder.addHeader("auth", it) }
                 val response = chain.proceed(builder.build())
-                if (response.code == 401) AuthService.triggerLogout()
+                if (response.code == 401) AuthService.triggerLogout(response.request.url.encodedPath != "/")
+                if (response.code / 100 == 5) AuthService.triggerOffline()
                 response
             }
             .build()

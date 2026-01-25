@@ -4,6 +4,7 @@ lifecycleRuntimeKtx = "2.10.0"
 datastorePreferences = "1.2.0"
 kotlinxCoroutines = "1.10.2"
 material = "1.14.0-alpha08"
+lifecycleProcess = "2.10.0"
 navigationCompose = "2.9.6"
 coreSplashscreen = "1.2.0"
 activityCompose = "1.12.2"
@@ -24,6 +25,7 @@ accompanist-swiperefresh = { module = "com.google.accompanist:accompanist-swiper
 kotlinx-coroutines-android = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-android", version.ref = "kotlinxCoroutines" }
 androidx-navigation-compose = { group = "androidx.navigation", name = "navigation-compose", version.ref = "navigationCompose" }
 androidx-datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
+androidx-lifecycle-process = { group = "androidx.lifecycle", name = "lifecycle-process", version.ref = "lifecycleProcess" }
 kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinxCoroutines" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "activityCompose" }
 androidx-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
