@@ -167,8 +167,7 @@ async def update_group(group: dict):
         await app.ctx.client.get(url)
 
 
-@app.get("/on/<id:int>")
-async def on(request: Request, id: int):
+async def handle_light_set_request(request: Request, id: int, setting: bool):
     light = request.args.get("light", "night" if app.ctx.night_mode else "day")
     group = next((g for g in app.ctx.groups if g["id"] == id), None)
     alt_light = "day" if light == "night" else "night"
@@ -177,7 +176,7 @@ async def on(request: Request, id: int):
     if not group:
         raise NotFound("Group not found")
 
-    group[light]["on"] = True
+    group[light]["on"] = setting if setting is not None else not group[light]["on"]
     if not single or group[light]["ip"] == group[alt_light]["ip"]:
         group[alt_light]["on"] = False
 
@@ -189,30 +188,21 @@ async def on(request: Request, id: int):
     asyncio.create_task(broadcast())
     await request.receive_body()
     return empty()
+
+
+@app.get("/on/<id:int>")
+async def on(request: Request, id: int):
+    return await handle_light_set_request(request, id, True)
 
 
 @app.get("/off/<id:int>")
 async def off(request: Request, id: int):
-    light = request.args.get("light", "night" if app.ctx.night_mode else "day")
-    group = next((g for g in app.ctx.groups if g["id"] == id), None)
-    alt_light = "day" if light == "night" else "night"
-    single = request.args.get("light") is not None
+    return await handle_light_set_request(request, id, False)
 
-    if not group:
-        raise NotFound("Group not found")
 
-    group[light]["on"] = False
-    if not single or group[light]["ip"] == group[alt_light]["ip"]:
-        group[alt_light]["on"] = False
-    
-    if app.ctx.update_all:
-        await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
-        app.ctx.update_all = False
-    else:
-        asyncio.create_task(update_group(group))
-    asyncio.create_task(broadcast())
-    await request.receive_body()
-    return empty()
+@app.get("/toggle/<id:int>")
+async def toggle(request: Request, id: int):
+    return await handle_light_set_request(request, id, None)
 
 
 @app.get("/mode/<state>")
@@ -374,14 +364,14 @@ async def schedule(request: Request):
         "night_mode": bool(body.get("night_mode"))
     }
     asyncio.create_task(broadcast())
-    
+
     with open(CONFIG_FILE, "r+") as file:
         data = json.load(file)
         data["schedule"] = app.ctx.schedule
         file.seek(0)
         file.truncate()
         json.dump(data, file, indent=4)
-    
+
     await request.receive_body()
     return empty()
 
