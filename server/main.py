@@ -1,6 +1,7 @@
 from sanic.exceptions import Unauthorized, NotFound
 from sanic import Sanic, Request
 from sanic.response import empty
+from datetime import datetime
 import json as json
 import asyncio
 import base64
@@ -16,8 +17,9 @@ async def fetch_state(light, url, selector, type, key):
         light["on"] = resp.is_success and resp.json()[selector]
         if resp.is_success and (type == "bulb" or type == "dimmer") and "brightness" in resp.json() and app.ctx.night_mode:
             light["brightness"] = resp.json()["brightness"] if key == "night" else 100
-    except Exception:
-        print(f"Failed to fetch state for light at {light['ip']}")
+    except Exception as e:
+        light["on"] = False
+        print(f"Failed to fetch state for light at {light['ip']}: {e}")
 
 
 async def fetch_states(groups):
@@ -54,14 +56,14 @@ async def get_night_mode():
 
 
 async def schedule_loop():
-    seconds_in_day = 60 * 60 * 24
     while True:
         try:
             schedule = app.ctx.schedule
-            if schedule["hour"] and schedule["minute"]:
-                now = asyncio.get_event_loop().time() % seconds_in_day
+            if schedule["hour"] is not None and schedule["minute"] is not None:
+                now = datetime.now()
+                now_seconds = now.hour * 3600 + now.minute * 60 + now.second
                 target = schedule["hour"] * 3600 + schedule["minute"] * 60
-                if abs(now - target) < 30:
+                if abs(now_seconds - target) < 30:
                     if schedule["all_off"]:
                         app.ctx.all_off = True
                         await asyncio.gather(*(update_group(g) for g in app.ctx.groups))
@@ -72,8 +74,8 @@ async def schedule_loop():
                             group["night"]["on"] = False
                         await asyncio.gather(*(update_group(g) for g in app.ctx.groups))
                     asyncio.create_task(broadcast())
-        except Exception:
-            pass
+        except Exception as e:
+            print("Schedule loop error:", e)
         await asyncio.sleep(30)
 
 
