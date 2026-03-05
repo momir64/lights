@@ -166,12 +166,17 @@ async def update_group(group: dict):
             brightness = brightness if key == "night" else 100
             url += f"&brightness={brightness}"
 
-        await app.ctx.client.get(url)
+        try:
+            await app.ctx.client.get(url)
+        except httpx.TimeoutException:
+            print(f"Timeout updating {light['ip']}")
+        except Exception as e:
+            print(f"Failed updating {light['ip']}: {e}")
 
 
-async def handle_light_set_request(request: Request, id: int, setting: bool):
+async def handle_light_set_request(request: Request, id: int, setting: bool | None):
     light = request.args.get("light", "night" if app.ctx.night_mode else "day")
-    group = next((g for g in app.ctx.groups if g["id"] == id), None)
+    group: dict | None = next((g for g in app.ctx.groups if g["id"] == id), None)
     alt_light = "day" if light == "night" else "night"
     single = request.args.get("light") is not None
 
@@ -217,8 +222,8 @@ async def mode(request: Request, state: str):
         group[light]["on"] = group["day"]["on"] or group["night"]["on"]
         group[alt_light]["on"] = False
 
-    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     asyncio.create_task(broadcast())
+    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     await request.receive_body()
     return empty()
 
@@ -226,8 +231,8 @@ async def mode(request: Request, state: str):
 @app.get("/all-off/<on>")
 async def all_off(request: Request, on: str):
     app.ctx.all_off = on == "on"
-    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     asyncio.create_task(broadcast())
+    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     await request.receive_body()
     return empty()
 
@@ -235,8 +240,8 @@ async def all_off(request: Request, on: str):
 @app.get("/brightness/<value:float>")
 async def brightness(request: Request, value: float):
     update_scaled_brightness(value)
-    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     asyncio.create_task(broadcast())
+    await asyncio.gather(*(update_group(group) for group in app.ctx.groups))
     await request.receive_body()
     return empty()
 
@@ -334,7 +339,7 @@ async def update(request: Request):
     current_groups = {group["id"]: group for group in app.ctx.groups}
     groups = []
     for group in request.json:
-        current = current_groups[group["id"]]
+        current = current_groups.get(group["id"], group)
         current.update({
             key: (current[key] | value if isinstance(value, dict) and isinstance(current[key], dict) else value)
             for key, value in group.items()
@@ -376,6 +381,7 @@ async def schedule(request: Request):
 
     await request.receive_body()
     return empty()
+
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=100)
