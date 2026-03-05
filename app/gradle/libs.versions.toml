@@ -3,7 +3,7 @@ accompanistSwiperefresh = "0.36.0"
 lifecycleRuntimeKtx = "2.10.0"
 datastorePreferences = "1.2.0"
 kotlinxCoroutines = "1.10.2"
-material = "1.14.0-alpha08"
+material = "1.14.0-alpha09"
 lifecycleProcess = "2.10.0"
 navigationCompose = "2.9.6"
 coreSplashscreen = "1.2.0"
@@ -16,7 +16,7 @@ coreKtx = "1.17.0"
 okhttp = "5.3.2"
 kotlin = "2.3.0"
 gson = "2.13.2"
-agp = "9.0.0"
+agp = "9.1.0"
 
 [libraries]
 androidx-compose-material3-adaptive-navigation-suite = { group = "androidx.compose.material3", name = "material3-adaptive-navigation-suite" }
