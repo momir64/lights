@@ -15,7 +15,7 @@ async def fetch_state(light, url, selector, type, key):
     try:
         resp = await app.ctx.client.get(url)
         light["on"] = resp.is_success and resp.json()[selector]
-        if resp.is_success and (type == "bulb" or type == "dimmer") and "brightness" in resp.json() and app.ctx.night_mode:
+        if resp.is_success and type in ["bulb", "dimmer", "cct"] and "brightness" in resp.json() and app.ctx.night_mode:
             light["brightness"] = resp.json()["brightness"] if key == "night" else 100
     except Exception as e:
         light["on"] = False
@@ -32,6 +32,9 @@ async def fetch_states(groups):
                 selector = "output"
             elif light["type"] == "dimmer":
                 url = f"http://{light['ip']}/rpc/Light.GetStatus?id=0"
+                selector = "output"
+            elif light["type"] == "cct":
+                url = f"http://{light['ip']}/rpc/CCT.GetStatus?id=0"
                 selector = "output"
             else:
                 url = f"http://{light['ip']}/light/0/status"
@@ -157,10 +160,12 @@ async def update_group(group: dict):
             url = f"http://{light['ip']}/rpc/switch.set?id={light['id']}&on={str(on).lower()}"
         elif light["type"] == "dimmer":
             url = f"http://{light['ip']}/rpc/light.set?id=0&on={str(on).lower()}"
+        elif light["type"] == "cct":
+            url = f"http://{light['ip']}/rpc/cct.set?id=0&on={str(on).lower()}"
         else:
             url = f"http://{light['ip']}/light/0?turn={'on' if on else 'off'}"
 
-        if light["type"] in ["dimmer", "bulb"]:
+        if light["type"] in ["dimmer", "bulb", "cct"]:
             scalable = light.get("scalable", True)
             brightness = app.ctx.scaled_brightness_dict.get(group["id"], 100) if scalable else light.get("brightness", 100)
             brightness = brightness if key == "night" else 100

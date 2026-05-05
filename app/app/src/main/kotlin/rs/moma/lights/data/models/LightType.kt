@@ -3,6 +3,7 @@ package rs.moma.lights.data.models
 enum class LightType {
     Switch,
     Dimmer,
+    CCT,
     Bulb;
 
     override
