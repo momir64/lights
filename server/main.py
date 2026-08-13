@@ -1,6 +1,6 @@
+from sanic.response import empty, json as json_response
 from sanic.exceptions import Unauthorized, NotFound
 from sanic import Sanic, Request
-from sanic.response import empty
 from datetime import datetime
 import json as json
 import asyncio
@@ -9,6 +9,11 @@ import httpx
 
 app = Sanic("Lights")
 CONFIG_FILE = "config.json"
+
+
+@app.exception(Exception)
+async def handle_all(request, exception):
+    return json_response({"error": "Something went wrong"}, status=500)
 
 
 async def fetch_state(light, url, selector, type, key):
@@ -66,7 +71,9 @@ async def schedule_loop():
                 now = datetime.now()
                 now_seconds = now.hour * 3600 + now.minute * 60 + now.second
                 target = schedule["hour"] * 3600 + schedule["minute"] * 60
-                if abs(now_seconds - target) < 30:
+                run_key = (now.date(), schedule["hour"], schedule["minute"])
+                if abs(now_seconds - target) < 30 and app.ctx.last_schedule_run != run_key:
+                    app.ctx.last_schedule_run = run_key
                     if schedule["all_off"]:
                         app.ctx.all_off = True
                         await asyncio.gather(*(update_group(g) for g in app.ctx.groups))
@@ -86,6 +93,7 @@ async def schedule_loop():
 async def config(app: Sanic):
     app.ctx.client = httpx.AsyncClient(timeout=2)
     app.ctx.scaled_brightness_dict = {}
+    app.ctx.last_schedule_run = None
     app.ctx.update_all = False
     app.ctx.all_off = False
     app.ctx.sockets = set()
