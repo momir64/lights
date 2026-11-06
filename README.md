@@ -93,3 +93,7 @@ server/   Sanic server and config
 ## Notes
 
 This is a personal project, so some things are tailored to my setup (device addresses, the hardcoded server host, the IP-based auth shortcut, no built-in TLS). It's meant to show how it's put together, not to be a drop-in product.
+
+## License
+
+[TWAORPWB](LICENSE) applies.
