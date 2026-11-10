@@ -23,8 +23,8 @@ I built it because I wanted one place to control everything, with a proper "day"
 
 ```
 ┌──────────────┐   REST + WebSocket   ┌────────────────┐   HTTP RPC   ┌────────────┐
-│ Android app  │ ───────────────────▶ │ Python server  │ ───────────▶ │ Shelly     │
-│ (Compose)    │ ◀─────────────────── │ (Sanic)        │              │ devices    │
+│ Android app  │ ───────────────────> │ Python server  │ ───────────> │ Shelly     │
+│ (Compose)    │ <─────────────────── │ (Sanic)        │              │ devices    │
 └──────────────┘      state push      └────────────────┘              └────────────┘
 ```
 
